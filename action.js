@@ -220,8 +220,19 @@ const waitForDeploymentToStart = async ({
 
       const deployment =
         deployments.data.length > 0 &&
-        deployments.data.find((deployment) => {
-          return deployment.creator.login === actorName;
+        deployments.data.find(async (deployment) => {
+          const statuses = await octokit.rest.repos.listDeploymentStatuses({
+            owner,
+            repo,
+            deployment_id: deployment.id,
+          });
+          return (
+            deployment.creator.login === actorName ||
+            (statuses.data.length > 0 &&
+              statuses.data.find(
+                (status) => status.creator.login === actorName
+              ))
+          );
         });
 
       if (deployment) {
